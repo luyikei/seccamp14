@@ -1,0 +1,19 @@
+     1  #include <stdio.h>
+     2
+     3  main()
+     4  {
+     5          fork();
+     6          fork();
+     7          fork();
+     8          printf("hello\n");
+     9  }
+
+親プロセスを P とし、 子プロセスを (親プロセス)-C(番号) とすると
+5行目の時点で
+P P-C1
+6行目の時点で
+P P-C1 P-C2 P-C1-C1
+7行目の時点で
+P P-C1 P-C2 P-C1-C1 P-C3 P-C1-C2 P-C2-C1 P-C1-C1-C1
+
+よって 8つ 作成される
