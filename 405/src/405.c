@@ -13,9 +13,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define STDOUT 1
-#define STDIN 0
-
 int
 main(int argc, char *argv[])
 {
@@ -40,18 +37,18 @@ main(int argc, char *argv[])
 		  exit(1);
 	}
 
-	close(0);
-	close(1);
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
 
 
 
-	if (dup2(file_fd, 0) < 0) {
+	if (dup2(file_fd, STDIN_FILENO) < 0) {
 		  perror("dup2");
 		  close(file_fd);
 		  exit(1);
 	}
 	close(file_fd);
-	if (dup2(out_file_fd, 1) < 0) {
+	if (dup2(out_file_fd, STDOUT_FILENO) < 0) {
 			  perror("dup2");
 			  close(out_file_fd);
 			  exit(1);
