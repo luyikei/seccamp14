@@ -4,7 +4,7 @@
  Author      : luyikei
  Version     :
  Copyright   : NO-LICENSE
- Description : Hello World in C, Ansi-style
+ Description : http://www.coins.tsukuba.ac.jp/~syspro/2013/shui/quizzes4.html 407
  ============================================================================
  */
 #define _GNU_SOURCE
