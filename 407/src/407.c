@@ -71,6 +71,7 @@ void do_child()
 		}
 		i-=2;
 	}
+	free(data);
 }
 
 void do_parent()
@@ -94,6 +95,7 @@ void do_parent()
 		/* 満タンパイプを開放 */
 		read(pipe_fd[0], data, pipe_size);
 	}
+	free(data);
 
 	if (count < 0) {
 		  perror("read");
