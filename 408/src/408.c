@@ -25,9 +25,6 @@ int **pipe_fd;
 int total;
 int c_count;
 int *children;
-int pipe_size;
-
-fd_set *fds;
 
 void print_rec(int num, int alpha, int is_num)
 {
@@ -42,15 +39,10 @@ void print_rec(int num, int alpha, int is_num)
 
 void do_child(int current, int next)
 {
-	int t=0;
 	int i[3],count;
-	char *data;
 
 	close(pipe_fd[current][1]);
 	close(pipe_fd[next][0]);
-
-	data = malloc(pipe_size);
-	if (data == NULL) exit(1);
 
 	while(1){
 
@@ -58,7 +50,6 @@ void do_child(int current, int next)
 
 		if (count < 0) {
 			  perror("read");
-			  free(data);
 			  exit(1);
 		}
 
@@ -73,7 +64,6 @@ void do_child(int current, int next)
 
 			if (write(pipe_fd[next][1], &i, sizeof(i)) < 0) {
 				  perror("write");
-				  free(data);
 				  exit(1);
 			}
 
@@ -92,27 +82,22 @@ void do_child(int current, int next)
 
 		if (write(pipe_fd[next][1], &i, sizeof(i)) < 0) {
 			  perror("write");
-			  free(data);
 			  exit(1);
 		}
 
 	}
-	free(data);
 	exit(0);
 }
 
 void do_parent(int current, int next)
 {
-	char *data;
 	int    i[3]={0,0,1};
-	int     count, status, t=0;
+	int    status, count;
 
 	close(pipe_fd[next][0]);
 
 	close(pipe_fd[current][1]);
 
-	data = malloc(pipe_size);
-	if (data == NULL) exit(1);
 
 	while(1){
 
@@ -127,7 +112,6 @@ void do_parent(int current, int next)
 
 			if (write(pipe_fd[next][1], &i, sizeof(i)) < 0) {
 				  perror("write");
-				  free(data);
 				  exit(1);
 			}
 
@@ -146,7 +130,6 @@ void do_parent(int current, int next)
 
 		if (write(pipe_fd[next][1], &i, sizeof(i)) < 0) {
 			  perror("write");
-			  free(data);
 			  exit(1);
 		}
 
@@ -156,12 +139,14 @@ void do_parent(int current, int next)
 
 		if (count < 0) {
 			  perror("read");
-			  free(data);
 			  exit(1);
 		}
 
+		next++;
+		if(next == c_count)
+			next=0;
+
 	}
-	free(data);
 
 	if (wait(&status) < 0) {
 		  perror("wait");
@@ -171,13 +156,10 @@ void do_parent(int current, int next)
 
 void output()
 {
-	int i,j;
-	int fd[2];
+	int i;
 	children = malloc(sizeof(int) * c_count);
 
 	pipe_fd = malloc(sizeof(int *) * (c_count+1));
-
-	fds = malloc(sizeof(fd_set) * (c_count+1));
 
 	for(i =0;i<c_count+1;i++){
 		pipe_fd[i] = malloc(sizeof(int) * 2);
@@ -188,19 +170,14 @@ void output()
 			  perror("pipe");
 			  exit(1);
 		}
-
-		FD_ZERO(&fds[i]);
-		FD_SET(pipe_fd[i][0], &fds[i]);
 	}
-	pipe(fd);
-	pipe_size = fcntl(fd[1], F_GETPIPE_SZ);
 
 	for( i=0 ; i< c_count && (children[i] = fork()) > 0 ; i++ );
 
 	if( i == c_count ){
 		  do_parent(i, 0);
 	}else if( children[i] == 0){
-		  do_child(i, i+1);
+		  do_child(i, c_count);
 	}
 
 	for (i=0;i<(c_count+1);i++) {
@@ -208,7 +185,6 @@ void output()
 	}
 	free(pipe_fd);
 	free(children);
-	free(fds);
 }
 
 int main(int argc, char *argv[])
