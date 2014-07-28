@@ -22,38 +22,57 @@
 
 #include <limits.h>
 
-#define TOTAL_CHILDREN 2
+#define TOTAL_CHILDREN 5
 
 int pipe_fd[TOTAL_CHILDREN][2];
 
+
 void do_child(int current, int next)
 {
-	if(current){
+	char s[100];
 
-		close(0);
-		close(1);
-		dup2(pipe_fd[current][0], pipe_fd[current][0]);
-		dup2(pipe_fd[current][1], pipe_fd[next][1]);
+	if(current == TOTAL_CHILDREN-1){
+		close(pipe_fd[current][1]);
+		dup2(pipe_fd[current][0], 0 );
+
+		scanf("%s", s );
+		printf("The last child says:%s\n", s);
+		fflush(stdout);
 
 	}else{
+		close(pipe_fd[current][1]);
+		dup2(pipe_fd[current][0], 0 );
 		close(pipe_fd[next][0]);
-		dup2(1, pipe_fd[next][1]);
+		dup2(pipe_fd[next][1], 1);
+
+		scanf("%s", s);
+		printf("%s\n", s);
+		fflush(stdout);
 
 	}
+
+	exit(0);
 }
 
-void do_parent()
+void do_parent(int current, int next)
 {
-	int status;
+	char s[100];
+	int status,i;
 
-	close(pipe_fd[TOTAL_CHILDREN-1][1]);
+	close(pipe_fd[next][0]);
+	dup2(pipe_fd[next][1], 1);
 
-	close(0);
-	dup2(pipe_fd[TOTAL_CHILDREN-1][0], 0);
+	scanf("%s", s);
+	printf("%s\n", s);
+	fflush(stdout);
 
-	if(wait(&status) < 0){
-		perror("wait");
-		exit(1);
+	/* write(pipe_fd[next][1], &s, sizeof(s)); */
+
+	for(i=0;i<TOTAL_CHILDREN;i++){
+		if(wait(&status) < 0){
+			perror("wait");
+			exit(1);
+		}
 	}
 }
 
@@ -72,9 +91,9 @@ int main(void) {
 	for( i=0 ; i< TOTAL_CHILDREN && (children[i] = fork()) > 0 ; i++ );
 
 	if( i == TOTAL_CHILDREN ){
-		  do_parent();
+		  do_parent(-1,0);
 	}else if( children[i] == 0){
-		  do_child(i-1, i);
+		  do_child(i, i+1);
 	}
 
 
